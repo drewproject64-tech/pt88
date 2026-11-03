@@ -21,7 +21,8 @@ class Flows(unittest.IsolatedAsyncioTestCase):
     async def test_all_buttons_and_switch(self):
         update, context = self.context('hello')
         await respond(update, context)
-        self.assertIn('Choose', self.message.reply_text.call_args.args[0])
+        self.assertEqual('hello', self.message.reply_text.call_args.args[0])
+        self.assertEqual(context.user_data['tool'], BUTTONS[0])
         for button in BUTTONS:
             self.message.text = button
             await respond(update, context)
@@ -31,6 +32,10 @@ class Flows(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(self.message.reply_text.call_args.args[0])
         await start(update, context)
         self.assertEqual(context.user_data, {})
+        welcome = self.message.reply_text.call_args.args[0]
+        for button in BUTTONS:
+            self.assertIn(button, welcome)
+        self.assertIn('send text now', welcome)
 
     async def test_long_unicode_file_and_limit(self):
         update, context = self.context('😀' * 2000)

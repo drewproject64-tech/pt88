@@ -13,7 +13,8 @@ USERNAME = 'PT88_B88_Bot'
 ABOUT = 'Clean text, count words and characters, and convert letter case directly in Telegram.'
 DESCRIPTION = ('PT88B88_Bot provides three simple text tools: Clean Text removes extra spaces and blank lines; '
                'Word Counter counts words, characters and lines; Case Converter returns uppercase and lowercase versions. '
-               'Tap Start, choose a tool and send text. No account or payment required. Use /privacy for data information.')
+               'Send text to clean it immediately, or choose one of the three tools. Results appear in this chat. '
+               'No account or payment required. Use /privacy for data information.')
 BUTTONS = ('Clean Text', 'Word Counter', 'Case Converter')
 KEYBOARD = ReplyKeyboardMarkup([[b] for b in BUTTONS], resize_keyboard=True, is_persistent=True)
 LOG = logging.getLogger(__name__)
@@ -36,8 +37,13 @@ def convert_case(text):
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data.clear()
     await update.effective_message.reply_text(
-        f'Welcome to {NAME}.\nChoose a text tool below, then send your text.\n'
-        'You can switch tools at any time. /help explains each tool.', reply_markup=KEYBOARD)
+        f'{NAME} — three text tools in this chat.\n\n'
+        'Clean Text: remove extra spaces and blank lines.\n'
+        'Word Counter: count words, characters and lines.\n'
+        'Case Converter: get uppercase and lowercase copies.\n\n'
+        'Tap a tool, then send text. Or send text now to clean it immediately.\n'
+        'Example: send "Hello   world" to receive "Hello world".\n'
+        'Use /help for instructions or /privacy for data information.', reply_markup=KEYBOARD)
 
 
 async def help_command(update, context):
@@ -63,12 +69,14 @@ async def respond(update, context):
     text = message.text
     if text in BUTTONS:
         context.user_data['tool'] = text
-        await message.reply_text(f'{text} selected. Send your text now.', reply_markup=KEYBOARD)
+        examples = {
+            BUTTONS[0]: 'Example: "Hello   world" becomes "Hello world".',
+            BUTTONS[1]: 'Example: "Hello world" contains 2 words and 11 characters.',
+            BUTTONS[2]: 'Example: "Hello" becomes "HELLO" and "hello".',
+        }
+        await message.reply_text(f'{text} selected. Send your text now.\n{examples[text]}', reply_markup=KEYBOARD)
         return
-    tool = context.user_data.get('tool')
-    if not tool:
-        await message.reply_text('Choose one of the three tools below first.', reply_markup=KEYBOARD)
-        return
+    tool = context.user_data.setdefault('tool', BUTTONS[0])
     if not text.strip():
         await message.reply_text('Please send text containing at least one visible character.', reply_markup=KEYBOARD)
         return
